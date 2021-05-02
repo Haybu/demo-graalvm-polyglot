@@ -1,0 +1,1 @@
+print("Hi {}, this is from python code!".format(foo))
