@@ -33,7 +33,7 @@ import org.springframework.stereotype.Component;
  * @created : Saturday 5/1/21
  **/
 
-@Component
+//@Component
 public class Polyglot implements ApplicationRunner {
 
 	@Override
@@ -42,9 +42,9 @@ public class Polyglot implements ApplicationRunner {
 		final String filePath = "python/example.py";
 
 		Context context = Context.newBuilder().allowIO(true).build();
-		Value pythonBindings = context.getBindings(language);
+		Value valueBindings = context.getBindings(language);
 
-		pythonBindings.putMember("foo", "Haytham Mohamed");
+		valueBindings.putMember("foo", "Haytham Mohamed");
 
 		Resource fileResource = new ClassPathResource(filePath);
 		File file = fileResource.getFile();
