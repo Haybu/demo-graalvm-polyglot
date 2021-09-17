@@ -9,14 +9,17 @@
 		<version>2.4.5</version>
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
+
 	<groupId>io.agilehandy</groupId>
 	<artifactId>demo-graalvm-polyglot</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<name>demo-graalvm-polyglot</name>
 	<description>Demo project for Spring Boot</description>
+
 	<properties>
 		<java.version>11</java.version>
 	</properties>
+
 	<dependencies>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
