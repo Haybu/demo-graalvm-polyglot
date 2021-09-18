@@ -1,22 +1,12 @@
 package io.agilehandy.demo;
 
-import reactor.core.publisher.Flux;
-
-import java.time.Instant;
 import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.time.temporal.ChronoUnit;
-import java.time.temporal.TemporalUnit;
-import java.util.Random;
-import java.util.function.Supplier;
-import java.util.stream.IntStream;
-import java.util.stream.Stream;
 
 public class TimeSeries {
 
-    private LocalDateTime time;
-    private Double value;
-    private String key;
+    public LocalDateTime time;
+    public Double value;
+    public String key;
 
     public TimeSeries() {}
 

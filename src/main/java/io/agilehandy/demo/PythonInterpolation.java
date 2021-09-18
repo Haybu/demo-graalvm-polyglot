@@ -1,7 +1,6 @@
 package io.agilehandy.demo;
 
 import org.graalvm.polyglot.Context;
-import org.graalvm.polyglot.Language;
 import org.graalvm.polyglot.Source;
 import org.graalvm.polyglot.Value;
 import org.slf4j.Logger;
@@ -17,12 +16,16 @@ import reactor.core.publisher.Mono;
 
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.nio.file.Paths;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Random;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -34,12 +37,16 @@ public class PythonInterpolation implements ApplicationRunner {
 
     Logger log = LoggerFactory.getLogger(PythonInterpolation.class);
 
-    private final static String LANGUAGE = "paython";
+    private final static String LANGUAGE = "python";
     private final static String file = "interpolator.py";
+    private static String ENV_EXECUTABLE = PythonInterpolation.class.getClassLoader().getResource(Paths.get("venv", "bin", "graalpython").toString()).getPath();
 
     @Override
     public void run(ApplicationArguments args) throws Exception {
+        interpolate();
+    }
 
+    public void testFlux() {
         generateTimeSeries(10)
                 //.transform(f -> runningSummary().apply(f, new Window(10,10)))
                 .doOnNext(t -> log.info(t.toString()))
@@ -82,24 +89,27 @@ public class PythonInterpolation implements ApplicationRunner {
         };
     }
 
-    public Flux<TimeSeries> interpolate() throws Exception {
+    public void interpolate() throws Exception {
         Context context = Context.newBuilder(LANGUAGE)
                 .allowAllAccess(true)
-                //.allowExperimentalOptions(true)
+                .allowExperimentalOptions(true)
                 //.allowIO(true)
                 //.allowNativeAccess(true)
                 //.allowPolyglotAccess(PolyglotAccess.ALL)
                 //.allowCreateProcess(true)
                 //.allowHostClassLookup(name -> true)
-                ////.option("python.Executable", "ENV_EXECUTABLE")
-                ////.option("python.ForceImportSite", "true")
+                .option("python.Executable", "ENV_EXECUTABLE")
+                .option("python.ForceImportSite", "true")
                 .build();
 
-        List<TimeSeries> timeSeries = new ArrayList<>();
+        List<TimeSeries> timeSeriesList = new ArrayList<>();
+        generateTimeSeries(10).collectList().doOnNext(list -> timeSeriesList.addAll(list)).subscribe();
+
+
+        Value pythonBindings = context.getBindings(LANGUAGE);
 
         // to pass something to python side
-        //Value pythonBindings = context.getBindings(language);
-        //pythonBindings.putMember("foo", "Haytham Mohamed");
+        //pythonBindings.putMember("timeSeriesList", timeSeries);
 
         Resource fileResource = new ClassPathResource(file);
         InputStream inputStream = fileResource.getInputStream();
@@ -110,17 +120,19 @@ public class PythonInterpolation implements ApplicationRunner {
 
         // to get out of python
         // obtain python class
-        Value interpolatorClass = context.getBindings(LANGUAGE).getMember("Interpolator"); //
+        Value interpolatorClass = pythonBindings.getMember("Interpolator");
         // create instance from the python class
-        Value interpolatorInstance = interpolatorClass.newInstance();
+        Value interpolatorInstance = interpolatorClass.newInstance(timeSeriesList);
         // cast to Java interface that exposes the methods
         Interpolator interpolator = interpolatorInstance.as(Interpolator.class);
         // call the method. The method will be routed to python method counterpart
-        int sum = interpolator.sum(1, 5, 9);
-        System.out.println("sum is " + sum);
+
+        //interpolator.echo();
+
+        List<TimeSeries> interpolated = interpolator.interpolate(1);
+        interpolated.forEach(ts -> log.info(ts.toString()));
 
         context.close();
-        return Flux.empty();
     }
 
     public Flux<TimeSeries> generateTimeSeries(int count) {

@@ -135,18 +135,45 @@
                                  ! This execution installs the required
                                  ! packages. To do so it simply calls the 'pip'
                                  ! package manager inside the virtual environment
-                                 ! that we've created above.
+                                 ! that we've created above. (installing pandas)
                                   -->
-								<id>Install required packages into venv</id>
+								<id>Install required packages into venv - pandas</id>
 								<phase>generate-resources</phase>
 								<goals>
 									<goal>exec</goal>
 								</goals>
 								<configuration>
-									<executable>venv/bin/pip</executable>
+									<executable>venv/bin/graalpython</executable>
 									<arguments>
+										<argument>-m</argument>
+										<argument>ginstall</argument>
 										<argument>install</argument>
-										<argument>numpy pandas random</argument>
+										<argument>pandas</argument>
+									</arguments>
+									<environmentVariables>
+										<VIRTUAL_ENV>${project.basedir}/venv</VIRTUAL_ENV>
+									</environmentVariables>
+								</configuration>
+							</execution>
+							<execution>
+								<!--
+                                 ! This execution installs the required
+                                 ! packages. To do so it simply calls the 'pip'
+                                 ! package manager inside the virtual environment
+                                 ! that we've created above. (installing numpy)
+                                  -->
+								<id>Install required packages into venv - numpy</id>
+								<phase>generate-resources</phase>
+								<goals>
+									<goal>exec</goal>
+								</goals>
+								<configuration>
+									<executable>venv/bin/graalpython</executable>
+									<arguments>
+										<argument>-m</argument>
+										<argument>ginstall</argument>
+										<argument>install</argument>
+										<argument>numpy</argument>
 									</arguments>
 									<environmentVariables>
 										<VIRTUAL_ENV>${project.basedir}/venv</VIRTUAL_ENV>
