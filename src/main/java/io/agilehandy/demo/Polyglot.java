@@ -26,7 +26,6 @@ import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
-import org.springframework.stereotype.Component;
 
 /**
  * @author : Haytham Mohamed
@@ -39,7 +38,7 @@ public class Polyglot implements ApplicationRunner {
 	@Override
 	public void run(ApplicationArguments args) throws Exception {
 		final String language = "python";
-		final String filePath = "python/example.py";
+		final String filePath = "example.py";
 
 		Context context = Context.newBuilder().allowIO(true).build();
 		Value valueBindings = context.getBindings(language);

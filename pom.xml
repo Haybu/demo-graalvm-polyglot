@@ -27,6 +27,17 @@
 		</dependency>
 
 		<dependency>
+			<groupId>io.projectreactor</groupId>
+			<artifactId>reactor-core</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>org.graalvm.sdk</groupId>
+			<artifactId>graal-sdk</artifactId>
+			<version>21.2.0</version>
+		</dependency>
+
+		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-test</artifactId>
 			<scope>test</scope>
@@ -39,7 +50,152 @@
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
 			</plugin>
+
+			<!-- validate graalpython is installed -->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-enforcer-plugin</artifactId>
+				<version>3.0.0-M3</version>
+				<executions>
+					<execution>
+						<id>enforce-graalvm-python</id>
+						<phase>validate</phase>
+						<goals>
+							<goal>enforce</goal>
+						</goals>
+						<configuration>
+							<rules>
+								<requireFilesExist>
+									<message>You must set JAVA_HOME to a GraalVM with Python installed.</message>
+									<files>
+										<file>${env.JAVA_HOME}/bin/graalpython</file>
+									</files>
+								</requireFilesExist>
+							</rules>
+							<fail>true</fail>
+							<failFast>true</failFast>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
 		</plugins>
+
+		<resources>
+			<!--
+             ! We make sure to include the virtual environment and any additional
+             ! Python files with the build artifacts.
+              -->
+			<resource>
+				<directory>${project.basedir}</directory>
+				<includes>
+					<include>venv/**/*</include>
+				</includes>
+			</resource>
+			<resource>
+				<directory>${project.basedir}/src/main/resources/</directory>
+				<includes>
+					<include>*.py</include>
+				</includes>
+			</resource>
+		</resources>
 	</build>
+
+	<profiles>
+		<profile>
+			<id>prepare-venv</id>
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>org.codehaus.mojo</groupId>
+						<artifactId>exec-maven-plugin</artifactId>
+						<version>1.6.0</version>
+						<executions>
+							<execution>
+								<!--
+                                 ! This execution creates the virtual environment
+                                 ! to contain the Python packages that we will be
+                                 ! using in the Java program.
+                                  -->
+								<id>Prepare venv</id>
+								<phase>generate-resources</phase>
+								<goals>
+									<goal>exec</goal>
+								</goals>
+								<configuration>
+									<executable>${env.JAVA_HOME}/bin/graalpython</executable>
+									<arguments>
+										<argument>-m</argument>
+										<argument>venv</argument>
+										<argument>venv</argument>
+									</arguments>
+								</configuration>
+							</execution>
+							<execution>
+								<!--
+                                 ! This execution installs the required
+                                 ! packages. To do so it simply calls the 'pip'
+                                 ! package manager inside the virtual environment
+                                 ! that we've created above.
+                                  -->
+								<id>Install required packages into venv</id>
+								<phase>generate-resources</phase>
+								<goals>
+									<goal>exec</goal>
+								</goals>
+								<configuration>
+									<executable>venv/bin/pip</executable>
+									<arguments>
+										<argument>install</argument>
+										<argument>numpy pandas random</argument>
+									</arguments>
+									<environmentVariables>
+										<VIRTUAL_ENV>${project.basedir}/venv</VIRTUAL_ENV>
+									</environmentVariables>
+								</configuration>
+							</execution>
+						</executions>
+					</plugin>
+				</plugins>
+			</build>
+			<activation>
+				<file>
+					<missing>venv/bin/pip</missing>
+				</file>
+			</activation>
+		</profile>
+		<profile>
+			<id>run</id>
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>org.codehaus.mojo</groupId>
+						<artifactId>exec-maven-plugin</artifactId>
+						<version>3.0.0</version>
+						<executions>
+							<execution>
+								<id>default-cli</id>
+								<goals>
+									<goal>exec</goal>
+								</goals>
+							</execution>
+						</executions>
+						<configuration>
+							<executable>${env.JAVA_HOME}/bin/java</executable>
+							<arguments>
+								<argument>-classpath</argument>
+								<classpath/>
+								<argument>io.agilehandy.demo.DemoApplication</argument>
+							</arguments>
+						</configuration>
+					</plugin>
+				</plugins>
+			</build>
+			<activation>
+				<file>
+					<exists>venv/bin/pip</exists>
+				</file>
+			</activation>
+		</profile>
+	</profiles>
 
 </project>
